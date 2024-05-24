@@ -1,17 +1,9 @@
 require('dotenv').config()
 const pg = require('pg')
-const { Client } = pg
-const client = new Client({
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    host: 'localhost',
-    port: 5432,
-    database: process.env.DATABASE,
-})
-
+const { printTable } = require('console-table-printer');
+const client = require('./connection')
 module.exports = {
     runAnswers: async function (answer, deptAnswer, roleName, roleSalary, roleDept, employeeFirstName, employeeLastName, employeeRole) {
-        await client.connect()
         try {
             let selectRoleDept;
             let selectEmployeeRole;
@@ -38,12 +30,12 @@ module.exports = {
                 'Update an employee role': 'w',//add this
             }
             const res = await client.query(obj[answer])
-            console.log(res.rows)
+            console.log('\n')
+            printTable(res.rows)
         }
         catch (err) {
             console.error(err);
         } finally {
-            await client.end()
         }
     },
 }

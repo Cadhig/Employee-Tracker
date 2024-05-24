@@ -1,16 +1,7 @@
-const fs = require('fs')
-const path = require('path')
+
 const inquirer = require('inquirer')
-const { runAnswers, runRole } = require('./checkAnswer')
-const pg = require('pg')
-const { Client } = pg
-const client = new Client({
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    host: 'localhost',
-    port: 5432,
-    database: process.env.DATABASE,
-})
+const { runAnswers } = require('./checkAnswer')
+const client = require('./connection')
 
 async function runPrompt(answer) {
     await client.connect()
@@ -28,10 +19,10 @@ async function runPrompt(answer) {
                 name: 'questions'
             },
         ]);
-
         if (answers.name === 'Exit') {
             console.log('Exiting...');
-            break;
+            await client.end()
+            process.exit()
         }
         if (answers.questions === 'Add department') {
             deptAnswer = await inquirer.prompt([
@@ -85,7 +76,6 @@ async function runPrompt(answer) {
         runAnswers(answers.questions, deptAnswer?.deptName, roleAnswer?.roleName, roleAnswer?.roleSalary, roleAnswer?.roleDept, employeeAnswer?.firstName, employeeAnswer?.lastName, employeeAnswer?.employeeRole)
 
     }
-    await client.end()
 }
 
 
