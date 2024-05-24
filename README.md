@@ -12,3 +12,6 @@ Use PostgreSQL database to add and view employees, departments, and roles to tab
 
   
 ![image](https://github.com/Cadhig/Employee-Tracker/assets/160413853/62630763-0b4b-4b34-ac1a-ab1564e4767b)
+
+Check out my walkthrough video:
+https://drive.google.com/file/d/1sTNPta5rBD2Oj2UA5LUg4hwTDJHyU4eb/view
