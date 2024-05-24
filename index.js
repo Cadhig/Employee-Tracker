@@ -1,9 +1,24 @@
 const fs = require('fs')
 const path = require('path')
 const inquirer = require('inquirer')
-const { useAnswers, runAnswers } = require('./checkAnswer')
+const { runAnswers, runRole } = require('./checkAnswer')
+const pg = require('pg')
+const { Client } = pg
+const client = new Client({
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    host: 'localhost',
+    port: 5432,
+    database: process.env.DATABASE,
+})
 
 async function runPrompt(answer) {
+    await client.connect()
+    let deptAnswer;
+    let roleAnswer;
+    let employeeAnswer;
+    let deptList = await client.query('SELECT * FROM department');
+    let roleList = await client.query('SELECT * FROM role')
     while (true) {
         const answers = await inquirer.prompt([
             {
@@ -18,9 +33,60 @@ async function runPrompt(answer) {
             console.log('Exiting...');
             break;
         }
-        runAnswers(answers.questions)
-        useAnswers(answers.questions)
+        if (answers.questions === 'Add department') {
+            deptAnswer = await inquirer.prompt([
+                {
+                    type: 'input',
+                    message: 'Enter department name',
+                    name: 'deptName'
+                }
+            ])
+        }
+        if (answers.questions === 'Add a role') {
+            roleAnswer = await inquirer.prompt([
+                {
+                    type: 'input',
+                    message: 'Enter role name',
+                    name: 'roleName'
+                },
+                {
+                    type: 'input',
+                    message: 'Enter role salary (no decimals or commas)',
+                    name: 'roleSalary'
+                },
+                {
+                    type: 'list',
+                    message: 'What department does it belong to?',
+                    name: 'roleDept',
+                    choices: deptList.rows.map(department => department.deptname)
+                },
+            ])
+        }
+        if (answers.questions === 'Add an employee') {
+            employeeAnswer = await inquirer.prompt([
+                {
+                    type: 'input',
+                    message: 'Enter employee first name',
+                    name: 'firstName'
+                },
+                {
+                    type: 'input',
+                    message: 'Enter employee last name',
+                    name: 'lastName'
+                },
+                {
+                    type: 'list',
+                    message: 'Enter employee role',
+                    name: 'employeeRole',
+                    choices: roleList.rows.map(role => role.title)
+                },
+            ])
+        }
+        runAnswers(answers.questions, deptAnswer?.deptName, roleAnswer?.roleName, roleAnswer?.roleSalary, roleAnswer?.roleDept, employeeAnswer?.firstName, employeeAnswer?.lastName, employeeAnswer?.employeeRole)
+
     }
+    await client.end()
 }
+
 
 runPrompt();

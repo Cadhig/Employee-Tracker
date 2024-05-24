@@ -10,19 +10,31 @@ const client = new Client({
 })
 
 module.exports = {
-    useAnswers: function (answer) {
-        console.log('you chose:', answer)
-    },
-    runAnswers: async function (answer) {
+    runAnswers: async function (answer, deptAnswer, roleName, roleSalary, roleDept, employeeFirstName, employeeLastName, employeeRole) {
         await client.connect()
         try {
+            let selectRoleDept;
+            let selectEmployeeRole;
+            let selectManagerId;
+            if (answer === 'Add a role') {
+                selectRoleDept = await client.query(`SELECT id FROM department WHERE deptname = '${roleDept}'`)
+            }
+            if (answer === 'Add an employee') {
+                selectEmployeeRole = await client.query(`SELECT id, department_id FROM role WHERE title = '${employeeRole}'`)
+                selectManagerId = await client.query(`SELECT employee.id 
+                FROM employee 
+                INNER JOIN role ON employee.role_id = role.id
+                INNER JOIN department ON department.id = role.department_id
+                WHERE employee.manager_id IS NULL
+                AND department.id = '${selectEmployeeRole?.rows[0]?.department_id}'`)
+            }
             const obj = {
                 'View all departments': 'SELECT * FROM department',
                 'View all roles': 'SELECT * FROM role',
                 'View all employees': 'SELECT * FROM employee',
-                'Add department': `UPDATE departments SET deptname = ${answer.value}`,
-                'Add a role': `UPDATE role SET title = ${answer.value} SET salary = ${answer.value}`,
-                'Add an employee': `UPDATE employee SET first_name = ${answer.value} last_name = ${answer.value} role_id = ${answer.value}`,
+                'Add department': `INSERT INTO department("deptname") VALUES ('${deptAnswer}')`,
+                'Add a role': `INSERT INTO role ("title", "salary","department_id") VALUES('${roleName}', '${roleSalary}', '${selectRoleDept?.rows[0]?.id}')`,
+                'Add an employee': `INSERT INTO employee("first_name","last_name","role_id","manager_id") VALUES('${employeeFirstName}','${employeeLastName}','${selectEmployeeRole?.rows[0]?.id}', '${selectManagerId?.rows[0]?.id}')`,
                 'Update an employee role': 'w',//add this
             }
             const res = await client.query(obj[answer])
@@ -33,8 +45,7 @@ module.exports = {
         } finally {
             await client.end()
         }
-
-    }
+    },
 }
 
 
